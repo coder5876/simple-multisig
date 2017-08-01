@@ -15,14 +15,21 @@ contract('SimpleMultiSig', function(accounts) {
   let acct
   let lw
 
-let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, data) {
-  
+let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, data, doSort) {
+
   let input = '0x19' + '00' + multisigAddr.slice(2) + destinationAddr.slice(2) + leftPad(value.toString('16'), '64', '0') + data.slice(2) + leftPad(nonce.toString('16'), '64', '0')
   let hash = solsha3(input)
 
   let sigV = []
   let sigR = []
   let sigS = []
+
+  //Put addresses in increasing order
+  if (doSort) {
+    signers.sort(function(a, b) {
+      return parseInt(a) - parseInt(b);
+    })
+  }
 
   for (var i=0; i<signers.length; i++) {
     let sig = lightwallet.signing.signMsgHash(lw, keyFromPw, hash, signers[i])
@@ -35,7 +42,7 @@ let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, 
 
 }
 
-let executeSendSuccess = async function(owners, threshold, signers, done) {
+let executeSendSuccess = async function(owners, threshold, signers, done, doSort) {
 
   let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
 
@@ -52,32 +59,32 @@ let executeSendSuccess = async function(owners, threshold, signers, done) {
 
   // check that owners are stored correctly
   for (var i=0; i<owners.length; i++) {
-    let ownerFromContract = await multisig.owners.call(i)
+    let ownerFromContract = await multisig.ownersArr.call(i)
     assert.equal(owners[i], ownerFromContract)
   }
 
   let value = web3.toWei(new BigNumber(0.01), 'ether')
 
-  let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
+  let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x', doSort)
 
   await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '0x', {from: accounts[0], gasLimit: 1000000})
-  
+
   // Check funds sent
   bal = await web3GetBalance(randomAddr)
   assert.equal(bal.toString(), value.toString())
-  
+
   // Check nonce updated
   nonce = await multisig.nonce.call()
   assert.equal(nonce.toNumber(), 1)
 
   // Send again
-  sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
+  sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x', doSort)
   await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '0x', {from: accounts[0], gasLimit: 1000000})
 
   // Check funds
   bal = await web3GetBalance(randomAddr)
   assert.equal(bal.toString(), (value*2).toString())
-  
+
   // Check nonce updated
   nonce = await multisig.nonce.call()
   assert.equal(nonce.toNumber(), 2)
@@ -88,17 +95,17 @@ let executeSendSuccess = async function(owners, threshold, signers, done) {
   let number = 12345
   let data = '0x' + lightwallet.txutils._encodeFunctionTxData('register', ['uint256'], [number])
 
-  sigs = createSigs(signers, multisig.address, nonce, reg.address, value, data)
+  sigs = createSigs(signers, multisig.address, nonce, reg.address, value, data, doSort)
   await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, reg.address, value, data, {from: accounts[0], gasLimit: 1000000})
-  
+
   // Check that number has been set in registry
-  let numFromRegistry = await reg.registry(multisig.address)  
+  let numFromRegistry = await reg.registry(multisig.address)
   assert.equal(numFromRegistry.toNumber(), number)
 
   // Check funds in registry
   bal = await web3GetBalance(reg.address)
   assert.equal(bal.toString(), value.toString())
-  
+
   // Check nonce updated
   nonce = await multisig.nonce.call()
   assert.equal(nonce.toNumber(), 3)
@@ -106,7 +113,7 @@ let executeSendSuccess = async function(owners, threshold, signers, done) {
   done()
 }
 
-let executeSendFailure = async function(owners, threshold, signers, done) {
+let executeSendFailure = async function(owners, threshold, signers, done, doSort) {
 
   let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
 
@@ -118,7 +125,7 @@ let executeSendFailure = async function(owners, threshold, signers, done) {
 
   let randomAddr = solsha3(Math.random()).slice(0,42)
   let value = web3.toWei(new BigNumber(0.1), 'ether')
-  let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
+  let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x', doSort)
 
   let errMsg = ''
   try {
@@ -173,45 +180,53 @@ let creationFailure = async function(owners, threshold, signers, done) {
   describe("3 signers, threshold 2", () => {
 
     it("should succeed with signers 0, 1", (done) => {
-      executeSendSuccess(acct.slice(0,3), 2, [acct[0], acct[1]], done)
+      executeSendSuccess(acct.slice(0,3), 2, [acct[0], acct[1]], done, true)
     })
 
     it("should succeed with signers 0, 2", (done) => {
-      executeSendSuccess(acct.slice(0,3), 2, [acct[0], acct[2]], done)
+      executeSendSuccess(acct.slice(0,3), 2, [acct[0], acct[2]], done, true)
     })
 
     it("should succeed with signers 1, 2", (done) => {
-      executeSendSuccess(acct.slice(0,3), 2, [acct[1], acct[2]], done)
+      executeSendSuccess(acct.slice(0,3), 2, [acct[1], acct[2]], done, true)
     })
 
     it("should fail due to non-owner signer", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, [acct[0], acct[3]], done)
+      executeSendFailure(acct.slice(0,3), 2, [acct[0], acct[3]], done, true)
     })
 
     it("should fail with more signers than threshold", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, acct.slice(0,3), done)
+      executeSendFailure(acct.slice(0,3), 2, acct.slice(0,3), done, true)
     })
 
     it("should fail with fewer signers than threshold", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, [acct[0]], done)
+      executeSendFailure(acct.slice(0,3), 2, [acct[0]], done, true)
+    })
+
+    it("should fail with one signer signing twice", (done) => {
+      executeSendFailure(acct.slice(0,3), 2, [acct[0], acct[0]], done, true)
     })
 
     it("should fail with signers in wrong order (1,0)", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, [acct[1], acct[0]], done)
+      let signers = [acct[1], acct[0]]
+      signers.sort(function(a, b) {
+        return parseInt(b) - parseInt(a); //opposite of how should be
+      })
+      executeSendFailure(acct.slice(0,3), 2, signers, done, false)
     })
 })
 
   describe("Edge cases", () => {
     it("should succeed with 10 owners, 10 signers", (done) => {
-      executeSendSuccess(acct.slice(0,10), 10, acct.slice(0,10), done)
+      executeSendSuccess(acct.slice(0,10), 10, acct.slice(0,10), done, true)
     })
 
     it("should fail with 0 signers", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, [], done)
+      executeSendFailure(acct.slice(0,3), 2, [], done, true)
     })
 
     it("should fail with 11 owners", (done) => {
-      creationFailure(acct.slice(0,11), 2, acct.slice(0,2), done)
+      creationFailure(acct.slice(0,11), 2, acct.slice(0,2), done, true)
     })
   })
 
