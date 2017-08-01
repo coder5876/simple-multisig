@@ -15,7 +15,7 @@ contract('SimpleMultiSig', function(accounts) {
   let acct
   let lw
 
-let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, data, doSort) {
+let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, data) {
 
   let input = '0x19' + '00' + multisigAddr.slice(2) + destinationAddr.slice(2) + leftPad(value.toString('16'), '64', '0') + data.slice(2) + leftPad(nonce.toString('16'), '64', '0')
   let hash = solsha3(input)
@@ -23,13 +23,6 @@ let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, 
   let sigV = []
   let sigR = []
   let sigS = []
-
-  //Put addresses in increasing order
-  if (doSort) {
-    signers.sort(function(a, b) {
-      return parseInt(a) - parseInt(b);
-    })
-  }
 
   for (var i=0; i<signers.length; i++) {
     let sig = lightwallet.signing.signMsgHash(lw, keyFromPw, hash, signers[i])
@@ -42,7 +35,7 @@ let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, 
 
 }
 
-let executeSendSuccess = async function(owners, threshold, signers, done, doSort) {
+let executeSendSuccess = async function(owners, threshold, signers, done) {
 
   let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
 
@@ -65,7 +58,7 @@ let executeSendSuccess = async function(owners, threshold, signers, done, doSort
 
   let value = web3.toWei(new BigNumber(0.01), 'ether')
 
-  let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x', doSort)
+  let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
 
   await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '0x', {from: accounts[0], gasLimit: 1000000})
 
@@ -78,7 +71,7 @@ let executeSendSuccess = async function(owners, threshold, signers, done, doSort
   assert.equal(nonce.toNumber(), 1)
 
   // Send again
-  sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x', doSort)
+  sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
   await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '0x', {from: accounts[0], gasLimit: 1000000})
 
   // Check funds
@@ -95,7 +88,7 @@ let executeSendSuccess = async function(owners, threshold, signers, done, doSort
   let number = 12345
   let data = '0x' + lightwallet.txutils._encodeFunctionTxData('register', ['uint256'], [number])
 
-  sigs = createSigs(signers, multisig.address, nonce, reg.address, value, data, doSort)
+  sigs = createSigs(signers, multisig.address, nonce, reg.address, value, data)
   await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, reg.address, value, data, {from: accounts[0], gasLimit: 1000000})
 
   // Check that number has been set in registry
@@ -113,7 +106,7 @@ let executeSendSuccess = async function(owners, threshold, signers, done, doSort
   done()
 }
 
-let executeSendFailure = async function(owners, threshold, signers, done, doSort) {
+let executeSendFailure = async function(owners, threshold, signers, done) {
 
   let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
 
@@ -125,7 +118,7 @@ let executeSendFailure = async function(owners, threshold, signers, done, doSort
 
   let randomAddr = solsha3(Math.random()).slice(0,42)
   let value = web3.toWei(new BigNumber(0.1), 'ether')
-  let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x', doSort)
+  let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
 
   let errMsg = ''
   try {
@@ -180,53 +173,61 @@ let creationFailure = async function(owners, threshold, signers, done) {
   describe("3 signers, threshold 2", () => {
 
     it("should succeed with signers 0, 1", (done) => {
-      executeSendSuccess(acct.slice(0,3), 2, [acct[0], acct[1]], done, true)
+      let signers = [acct[0], acct[1]]
+      signers.sort()
+      executeSendSuccess(acct.slice(0,3), 2, signers, done)
     })
 
     it("should succeed with signers 0, 2", (done) => {
-      executeSendSuccess(acct.slice(0,3), 2, [acct[0], acct[2]], done, true)
+      let signers = [acct[0], acct[2]]
+      signers.sort()
+      executeSendSuccess(acct.slice(0,3), 2, signers, done)
     })
 
     it("should succeed with signers 1, 2", (done) => {
-      executeSendSuccess(acct.slice(0,3), 2, [acct[1], acct[2]], done, true)
+      let signers = [acct[1], acct[2]]
+      signers.sort()
+      executeSendSuccess(acct.slice(0,3), 2, signers, done)
     })
 
     it("should fail due to non-owner signer", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, [acct[0], acct[3]], done, true)
+      let signers = [acct[0], acct[3]]
+      signers.sort()
+      executeSendFailure(acct.slice(0,3), 2, signers, done)
     })
 
     it("should fail with more signers than threshold", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, acct.slice(0,3), done, true)
+      acct.sort()
+      executeSendFailure(acct.slice(0,3), 2, acct.slice(0,3), done)
     })
 
     it("should fail with fewer signers than threshold", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, [acct[0]], done, true)
+      executeSendFailure(acct.slice(0,3), 2, [acct[0]], done)
     })
 
     it("should fail with one signer signing twice", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, [acct[0], acct[0]], done, true)
+      executeSendFailure(acct.slice(0,3), 2, [acct[0], acct[0]], done)
     })
 
-    it("should fail with signers in wrong order (1,0)", (done) => {
-      let signers = [acct[1], acct[0]]
-      signers.sort(function(a, b) {
-        return parseInt(b) - parseInt(a); //opposite of how should be
-      })
-      executeSendFailure(acct.slice(0,3), 2, signers, done, false)
+    it("should fail with signers in wrong order", (done) => {
+      let signers = [acct[0], acct[1]]
+      signers.sort().reverse() //opposite order it should be
+      executeSendFailure(acct.slice(0,3), 2, signers, done)
     })
 })
 
   describe("Edge cases", () => {
     it("should succeed with 10 owners, 10 signers", (done) => {
-      executeSendSuccess(acct.slice(0,10), 10, acct.slice(0,10), done, true)
+      acct.sort()
+      executeSendSuccess(acct.slice(0,10), 10, acct.slice(0,10), done)
     })
 
     it("should fail with 0 signers", (done) => {
-      executeSendFailure(acct.slice(0,3), 2, [], done, true)
+      executeSendFailure(acct.slice(0,3), 2, [], done)
     })
 
     it("should fail with 11 owners", (done) => {
-      creationFailure(acct.slice(0,11), 2, acct.slice(0,2), done, true)
+      creationFailure(acct.slice(0,11), 2, acct.slice(0,2), done)
     })
   })
 

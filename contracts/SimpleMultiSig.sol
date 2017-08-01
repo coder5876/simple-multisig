@@ -3,14 +3,14 @@ contract SimpleMultiSig {
 
   uint public nonce;                // (only) mutable state
   uint public threshold;            // immutable state
-  mapping (address => bool) owners; // immutable state
+  mapping (address => bool) isOwner; // immutable state
   address[] public ownersArr;        // immutable state
 
   function SimpleMultiSig(uint threshold_, address[] owners_) {
     if (owners_.length > 10 || threshold_ > owners_.length || threshold_ == 0) {throw;}
 
     for (uint i=0; i<owners_.length; i++) {
-      owners[owners_[i]] = true;
+      isOwner[owners_[i]] = true;
     }
     ownersArr = owners_;
     threshold = threshold_;
@@ -27,7 +27,7 @@ contract SimpleMultiSig {
     address lastAdd = address(0); // cannot have address(0) as an owner
     for (uint i = 0; i < threshold; i++) {
         address recovered = ecrecover(txHash, sigV[i], sigR[i], sigS[i]);
-        if (recovered <= lastAdd || !owners[recovered]) throw;
+        if (recovered <= lastAdd || !isOwner[recovered]) throw;
         lastAdd = recovered;
     }
 
