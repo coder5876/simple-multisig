@@ -1,4 +1,7 @@
+// Update this to `pragma solidity 0.4.14` as early as possible to account for ecrecover bugfix
+// This is currently blocked by truffle not yet supporting 0.4.14 https://github.com/trufflesuite/truffle/releases
 pragma solidity 0.4.11;
+
 contract SimpleMultiSig {
 
   uint public nonce;                // (only) mutable state
