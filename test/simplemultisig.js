@@ -166,6 +166,7 @@ contract('SimpleMultiSig', function(accounts) {
         lw.generateNewAddress(keyFromPw, 20)
         let acctWithout0x = lw.getAddresses()
         acct = acctWithout0x.map((a) => {return '0x'+a})
+        acct.sort()
         done()
       })
     })
@@ -198,7 +199,6 @@ contract('SimpleMultiSig', function(accounts) {
     })
 
     it("should fail with more signers than threshold", (done) => {
-      acct.sort()
       executeSendFailure(acct.slice(0,3), 2, acct.slice(0,3), done)
     })
 
@@ -220,16 +220,12 @@ contract('SimpleMultiSig', function(accounts) {
 
   describe("Edge cases", () => {
     it("should succeed with 10 owners, 10 signers", (done) => {
-      acct.sort()
       executeSendSuccess(acct.slice(0,10), 10, acct.slice(0,10), done)
     })
 
-    it("should fail to create with signers 0, 0", (done) => {
-      acct.sort()
-      acct[1] = acct[0] 
-      creationFailure(acct.slice(0,2), 2, null, done)
+    it("should fail to create with signers 0, 0, 2, and threshold 3", (done) => { 
+      creationFailure([acct[0],acct[0],acct[2]], 3, done)
     })
-
 
     it("should fail with 0 signers", (done) => {
       executeSendFailure(acct.slice(0,3), 2, [], done)

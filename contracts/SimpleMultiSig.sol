@@ -9,8 +9,11 @@ contract SimpleMultiSig {
   function SimpleMultiSig(uint threshold_, address[] owners_) {
     require(owners_.length <= 10 && threshold_ <= owners_.length && threshold_ != 0);
 
+    address lastAdd = address(0); 
     for (uint i=0; i<owners_.length; i++) {
+      require(owners_[i] > lastAdd);
       isOwner[owners_[i]] = true;
+      lastAdd = owners_[i];
     }
     ownersArr = owners_;
     threshold = threshold_;
