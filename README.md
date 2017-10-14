@@ -5,6 +5,8 @@ This is an Ethereum multisig contract designed to be as simple as possible. It i
 
 The main idea behind the contract is to pass in a threshold of detached signatures into the `execute` function and the contract will check the signatures and send off the transaction.
 
+For a review by maurelian, see the file `maurelian_review.md`.
+
 To run the tests:
 
 * Make sure `testrpc` is running.
