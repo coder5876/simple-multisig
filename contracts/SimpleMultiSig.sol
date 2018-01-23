@@ -1,8 +1,8 @@
 pragma solidity 0.4.15;
 contract SimpleMultiSig {
 
-  uint public nonce;                // (only) mutable state
-  uint public threshold;            // immutable state
+  uint public nonce;                 // (only) mutable state
+  uint public threshold;             // immutable state
   mapping (address => bool) isOwner; // immutable state
   address[] public ownersArr;        // immutable state
 
