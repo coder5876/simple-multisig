@@ -1,4 +1,5 @@
-pragma solidity 0.4.15;
+pragma solidity ^0.4.18;
+
 contract SimpleMultiSig {
 
   uint public nonce;                 // (only) mutable state
@@ -6,7 +7,7 @@ contract SimpleMultiSig {
   mapping (address => bool) isOwner; // immutable state
   address[] public ownersArr;        // immutable state
 
-  function SimpleMultiSig(uint threshold_, address[] owners_) {
+  function SimpleMultiSig(uint threshold_, address[] owners_) public {
     require(owners_.length <= 10 && threshold_ <= owners_.length && threshold_ != 0);
 
     address lastAdd = address(0); 
@@ -20,7 +21,7 @@ contract SimpleMultiSig {
   }
 
   // Note that address recovered from signatures must be strictly increasing
-  function execute(uint8[] sigV, bytes32[] sigR, bytes32[] sigS, address destination, uint value, bytes data) {
+  function execute(uint8[] sigV, bytes32[] sigR, bytes32[] sigS, address destination, uint value, bytes data) public {
     require(sigR.length == threshold);
     require(sigR.length == sigS.length && sigR.length == sigV.length);
 
@@ -39,5 +40,5 @@ contract SimpleMultiSig {
     require(destination.call.value(value)(data));
   }
 
-  function () payable {}
+  function () payable public {}
 }

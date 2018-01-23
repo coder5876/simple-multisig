@@ -7,9 +7,13 @@ The main idea behind the contract is to pass in a threshold of detached signatur
 
 For a review by maurelian, see the file `maurelian_review.md`.
 
+Install global dependencies:
+
+* `npm install -g truffle`
+* `npm install -g ganache-cli`
+
 To run the tests:
 
-* Make sure `testrpc` is running.
+* Make sure `ganache-cli` is running in its own terminal window.
 * `npm install`
 * `npm run test`
-
