@@ -30,14 +30,22 @@ contract SimpleMultiSig {
 
     address lastAdd = address(0); // cannot have address(0) as an owner
     for (uint i = 0; i < threshold; i++) {
-        address recovered = ecrecover(txHash, sigV[i], sigR[i], sigS[i]);
-        require(recovered > lastAdd && isOwner[recovered]);
-        lastAdd = recovered;
+      address recovered = ecrecover(txHash, sigV[i], sigR[i], sigS[i]);
+      require(recovered > lastAdd && isOwner[recovered]);
+      lastAdd = recovered;
     }
 
     // If we make it here all signatures are accounted for
     nonce = nonce + 1;
-    require(destination.call.value(value)(data));
+    require(executeCall(destination, value, data));
+  }
+
+  // The address.call() syntax is no longer recommended, see:
+  // https://github.com/ethereum/solidity/issues/2884
+  function executeCall(address to, uint256 value, bytes data) internal returns (bool success) {
+    assembly {
+      success := call(gas, to, value, add(data, 0x20), mload(data), 0, 0)
+    }
   }
 
   function () payable public {}
