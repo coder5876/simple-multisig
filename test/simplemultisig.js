@@ -86,7 +86,7 @@ contract('SimpleMultiSig', function(accounts) {
     let reg = await TestRegistry.new({from: accounts[0]})
 
     let number = 12345
-    let data = '0x' + lightwallet.txutils._encodeFunctionTxData('register', ['uint256'], [number])
+    let data = lightwallet.txutils._encodeFunctionTxData('register', ['uint256'], [number])
 
     sigs = createSigs(signers, multisig.address, nonce, reg.address, value, data)
     await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, reg.address, value, data, {from: accounts[0], gasLimit: 1000000})
@@ -128,7 +128,7 @@ contract('SimpleMultiSig', function(accounts) {
       errMsg = error.message
     }
 
-    assert.equal(errMsg, 'VM Exception while processing transaction: invalid opcode', 'Test did not throw')
+    assert.equal(errMsg, 'VM Exception while processing transaction: revert', 'Test did not throw')
 
     done()
   }
@@ -142,7 +142,7 @@ contract('SimpleMultiSig', function(accounts) {
       errMsg = error.message
     }
 
-    assert.equal(errMsg, 'VM Exception while processing transaction: invalid opcode', 'Test did not throw')
+    assert.equal(errMsg, 'VM Exception while processing transaction: revert', 'Test did not throw')
 
     done()
   }
@@ -165,7 +165,7 @@ contract('SimpleMultiSig', function(accounts) {
 
         lw.generateNewAddress(keyFromPw, 20)
         let acctWithout0x = lw.getAddresses()
-        acct = acctWithout0x.map((a) => {return '0x'+a})
+        acct = acctWithout0x.map((a) => {return a})
         acct.sort()
         done()
       })
