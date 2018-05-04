@@ -1,6 +1,6 @@
 {
   "name": "simple-multisig",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple Ethereum multisig contract",
   "main": "test/simplemultisig.js",
   "directories": {
