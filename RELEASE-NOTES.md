@@ -1,5 +1,9 @@
 # Release Notes #
 
+## Version 1.0.3 - 2018-06-11 ##
+
+* Moved the assembly to inside the `execute()` function and removed the `executeCall()` function. This is to avoid the possibility of the `internal` keyword on the `executeCall()` function being accidentally removed which would have catastrophic consequences.
+
 ## Version 1.0.2 - 2018-05-04 ##
 
 * Updated to use assembly instead of `address.call()` syntax. Thanks to [ethers](https://github.com/ethers) for the suggestion. For more info about the problems with `address.call()` see [here](https://github.com/ethereum/solidity/issues/2884).
