@@ -35,17 +35,13 @@ contract SimpleMultiSig {
       lastAdd = recovered;
     }
 
-    // If we make it here all signatures are accounted for
+    // If we make it here all signatures are accounted for.
+    // The address.call() syntax is no longer recommended, see:
+    // https://github.com/ethereum/solidity/issues/2884
     nonce = nonce + 1;
-    require(executeCall(destination, value, data));
-  }
-
-  // The address.call() syntax is no longer recommended, see:
-  // https://github.com/ethereum/solidity/issues/2884
-  function executeCall(address to, uint256 value, bytes data) internal returns (bool success) {
-    assembly {
-      success := call(gas, to, value, add(data, 0x20), mload(data), 0, 0)
-    }
+    bool success = false;
+    assembly { success := call(gas, destination, value, add(data, 0x20), mload(data), 0, 0) }
+    require(success);
   }
 
   function () payable public {}
