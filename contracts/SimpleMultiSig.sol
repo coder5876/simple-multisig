@@ -8,7 +8,7 @@ contract SimpleMultiSig {
   address[] public ownersArr;        // immutable state
 
   function SimpleMultiSig(uint threshold_, address[] owners_) public {
-    require(owners_.length <= 10 && threshold_ <= owners_.length && threshold_ != 0);
+    require(owners_.length <= 10 && threshold_ <= owners_.length && threshold_ >= 0);
 
     address lastAdd = address(0); 
     for (uint i = 0; i < owners_.length; i++) {
