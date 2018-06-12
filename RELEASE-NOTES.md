@@ -1,5 +1,15 @@
 # Release Notes #
 
+## Version 1.0.4 - 2018-06-12 ##
+
+* Document owners_ address being strictly increasing, by [ripper234](https://github.com/ripper234)
+
+* Update to new constructor syntax, by [ripper234](https://github.com/ripper234)
+
+* Check that threshold is positive instead of non-zero, by [ripper234](https://github.com/ripper234)
+
+* Update .gitignore, by [ripper234](https://github.com/ripper234)
+
 ## Version 1.0.3 - 2018-06-11 ##
 
 * Moved the assembly to inside the `execute()` function and removed the `executeCall()` function. This is to avoid the possibility of the `internal` keyword on the `executeCall()` function being accidentally removed which would have catastrophic consequences.
