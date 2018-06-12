@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
 contract SimpleMultiSig {
 
@@ -7,7 +7,7 @@ contract SimpleMultiSig {
   mapping (address => bool) isOwner; // immutable state
   address[] public ownersArr;        // immutable state
 
-  function SimpleMultiSig(uint threshold_, address[] owners_) public {
+  constructor(uint threshold_, address[] owners_) public {
     require(owners_.length <= 10 && threshold_ <= owners_.length && threshold_ >= 0);
 
     address lastAdd = address(0); 
