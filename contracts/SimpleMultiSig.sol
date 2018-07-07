@@ -42,13 +42,13 @@ contract SimpleMultiSig {
   }
 
   // Execute with first nonce.
-  // If you want to perform concurrent requests, use execute_at_nonce.
+  // If you want to perform concurrent requests, use execute_with_nonce_index.
   function execute(uint8[] sigV, bytes32[] sigR, bytes32[] sigS, address destination, uint value, bytes data) public {
-      execute_at_nonce(sigV, sigR, sigS, destination, value, data, 0);
+      execute_with_nonce_index(sigV, sigR, sigS, destination, value, data, 0);
   }
 
   // Note that address recovered from signatures must be strictly increasing, in order to prevent duplicates
-  function execute_at_nonce(uint8[] sigV, bytes32[] sigR, bytes32[] sigS, address destination, uint value, bytes data, uint nonce_index) public {
+  function execute_with_nonce_index(uint8[] sigV, bytes32[] sigR, bytes32[] sigS, address destination, uint value, bytes data, uint nonce_index) public {
     require(sigR.length == threshold);
     require(sigR.length == sigS.length && sigR.length == sigV.length);
 
