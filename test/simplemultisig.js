@@ -37,7 +37,7 @@ contract('SimpleMultiSig', function(accounts) {
 
   let executeSendSuccess = async function(owners, threshold, signers, done) {
 
-    let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
+    let multisig = await SimpleMultiSig.new(threshold, owners, 1, {from: accounts[0]})
 
     let randomAddr = solsha3(Math.random()).slice(0,42)
 
@@ -108,7 +108,7 @@ contract('SimpleMultiSig', function(accounts) {
 
   let executeSendFailure = async function(owners, threshold, signers, done) {
 
-    let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
+    let multisig = await SimpleMultiSig.new(threshold, owners, 1, {from: accounts[0]})
 
     let nonce = await multisig.nonce.call()
     assert.equal(nonce.toNumber(), 0)
@@ -136,7 +136,7 @@ contract('SimpleMultiSig', function(accounts) {
   let creationFailure = async function(owners, threshold, done) {
 
     try {
-      await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
+      await SimpleMultiSig.new(threshold, owners, 1, {from: accounts[0]})
     }
     catch(error) {
       errMsg = error.message
