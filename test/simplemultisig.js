@@ -154,6 +154,42 @@ contract('SimpleMultiSig', function(accounts) {
     done()
   }
 
+  let executeSendFailureCancelNonce = async function(owners, threshold, signers, done) {
+
+    let multisig = await SimpleMultiSig.new(threshold, owners, 2, {from: accounts[0]})
+
+    let randomAddr0 = solsha3(Math.random()).slice(0,42)
+
+    // Receive funds
+    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(0.1), 'ether')})
+
+    let nonce0 = await multisig.nonces.call(0)
+    assert.equal(nonce0.toNumber(), 0)
+
+    let bal = await web3GetBalance(multisig.address)
+    assert.equal(bal, web3.toWei(0.1, 'ether'))
+
+    await multisig.cancel_nonce(0)
+
+    assert.equal((await multisig.nonces.call(0)).toNumber(), 2)
+
+    let value = web3.toWei(new BigNumber(0.01), 'ether')
+
+    let sigs0 = createSigs(signers, multisig.address, nonce0, randomAddr0, value, '0x')
+
+    let errMsg = ''
+    try {
+        await multisig.execute_with_nonce_index(sigs0.sigV, sigs0.sigR, sigs0.sigS, randomAddr0, value, '0x', 0, {from: accounts[0], gasLimit: 1000000})
+    }
+    catch(error) {
+      errMsg = error.message
+    }
+
+    assert.equal(errMsg, 'VM Exception while processing transaction: revert', 'Test did not throw')
+
+    done()
+  }
+
   let executeSendFailure = async function(owners, threshold, signers, done) {
 
     let multisig = await SimpleMultiSig.new(threshold, owners, 1, {from: accounts[0]})
@@ -268,6 +304,12 @@ contract('SimpleMultiSig', function(accounts) {
       let signers = [acct[0], acct[1]]
       signers.sort()
       executeSendSuccessConcurrent(acct.slice(0,3), 2, signers, done)
+    })
+
+    it("should fail if nonce canceled", (done) => {
+      let signers = [acct[0], acct[1]]
+      signers.sort()
+      executeSendFailureCancelNonce(acct.slice(0,3), 2, signers, done)
     })
 
   })  

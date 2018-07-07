@@ -13,6 +13,7 @@ contract SimpleMultiSig {
   constructor(uint threshold_, address[] owners_, uint nonce_window_size) public {
     require(owners_.length <= 10 && threshold_ <= owners_.length && threshold_ >= 0 && nonce_window_size > 0);
     admin = msg.sender;
+    next_nonce = 0;
 
     address lastAdd = address(0); 
     for (uint i = 0; i < owners_.length; i++) {
@@ -35,8 +36,8 @@ contract SimpleMultiSig {
   }
 
   // Use up the nonce at the specified index, aborting any in-flight transactionwith that nonce
-  function cancel(uint nonce_index) public {
-    require(msg.sender == admin);
+  function cancel_nonce(uint nonce_index) public {
+    require(msg.sender == admin && nonce_index < nonces.length);
 
     nonces[nonce_index] = next_nonce++;
   }
