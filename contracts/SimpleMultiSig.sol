@@ -52,6 +52,7 @@ contract SimpleMultiSig {
   function execute_with_nonce_index(uint8[] sigV, bytes32[] sigR, bytes32[] sigS, address destination, uint value, bytes data, uint nonce_index) public {
     require(sigR.length == threshold);
     require(sigR.length == sigS.length && sigR.length == sigV.length);
+    require(nonce_index < nonces.length);
 
     // Follows ERC191 signature scheme: https://github.com/ethereum/EIPs/issues/191
     bytes32 txHash = keccak256(byte(0x19), byte(0), this, destination, value, data, nonces[nonce_index]);
