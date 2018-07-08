@@ -116,9 +116,9 @@ contract('SimpleMultiSig', function(accounts) {
     // Receive funds
     await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(0.1), 'ether')})
 
-    let nonce0 = await multisig.nonces.call(0)
+    let nonce0 = await multisig.noncesArr.call(0)
     assert.equal(nonce0.toNumber(), 0)
-    let nonce1 = await multisig.nonces.call(1)
+    let nonce1 = await multisig.noncesArr.call(1)
     assert.equal(nonce1.toNumber(), 1)
 
     let bal = await web3GetBalance(multisig.address)
@@ -148,8 +148,8 @@ contract('SimpleMultiSig', function(accounts) {
     assert.equal(bal.toString(), value.toString())
 
     // Check nonce updated
-    assert.equal((await multisig.nonces.call(0)).toNumber(), 3)
-    assert.equal((await multisig.nonces.call(1)).toNumber(), 2)
+    assert.equal((await multisig.noncesArr.call(0)).toNumber(), 3)
+    assert.equal((await multisig.noncesArr.call(1)).toNumber(), 2)
 
     done()
   }
@@ -163,7 +163,7 @@ contract('SimpleMultiSig', function(accounts) {
     // Receive funds
     await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(0.1), 'ether')})
 
-    let nonce0 = await multisig.nonces.call(0)
+    let nonce0 = await multisig.noncesArr.call(0)
     assert.equal(nonce0.toNumber(), 0)
 
     let bal = await web3GetBalance(multisig.address)
@@ -171,7 +171,7 @@ contract('SimpleMultiSig', function(accounts) {
 
     await multisig.cancel_nonce(0)
 
-    assert.equal((await multisig.nonces.call(0)).toNumber(), 2)
+    assert.equal((await multisig.noncesArr.call(0)).toNumber(), 2)
 
     let value = web3.toWei(new BigNumber(0.01), 'ether')
 
@@ -215,7 +215,7 @@ contract('SimpleMultiSig', function(accounts) {
 
     let errMsg1 = ''
     try {
-        await multisig.nonces.call(2)
+        await multisig.noncesArr.call(2)
     }
     catch(error) {
       errMsg1 = error.message
