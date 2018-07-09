@@ -37,7 +37,7 @@ contract('SimpleMultiSig', function(accounts) {
 
   let executeSendSuccess = async function(owners, threshold, signers, done) {
 
-    let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
+    let multisig = await SimpleMultiSig.new(threshold, owners, 1, {from: accounts[0]})
 
     let randomAddr = solsha3(Math.random()).slice(0,42)
 
@@ -106,9 +106,128 @@ contract('SimpleMultiSig', function(accounts) {
     done()
   }
 
+  let executeSendSuccessConcurrent = async function(owners, threshold, signers, done) {
+
+    let multisig = await SimpleMultiSig.new(threshold, owners, 2, {from: accounts[0]})
+
+    let randomAddr0 = solsha3(Math.random()).slice(0,42)
+    let randomAddr1 = solsha3(Math.random()).slice(0,42)
+
+    // Receive funds
+    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(0.1), 'ether')})
+
+    let nonce0 = await multisig.noncesArr.call(0)
+    assert.equal(nonce0.toNumber(), 0)
+    let nonce1 = await multisig.noncesArr.call(1)
+    assert.equal(nonce1.toNumber(), 1)
+
+    let bal = await web3GetBalance(multisig.address)
+    assert.equal(bal, web3.toWei(0.1, 'ether'))
+
+    // check that owners are stored correctly
+    for (var i=0; i<owners.length; i++) {
+      let ownerFromContract = await multisig.ownersArr.call(i)
+      assert.equal(owners[i], ownerFromContract)
+    }
+
+    let value = web3.toWei(new BigNumber(0.01), 'ether')
+
+    let sigs0 = createSigs(signers, multisig.address, nonce0, randomAddr0, value, '0x')
+    let sigs1 = createSigs(signers, multisig.address, nonce1, randomAddr1, value, '0x')
+
+    await multisig.execute_with_nonce_index(sigs1.sigV, sigs1.sigR, sigs1.sigS, randomAddr1, value, '0x', 1, {from: accounts[0], gasLimit: 1000000})
+
+
+    bal = await web3GetBalance(randomAddr1)
+    assert.equal(bal.toString(), value.toString())
+
+    await multisig.execute_with_nonce_index(sigs0.sigV, sigs0.sigR, sigs0.sigS, randomAddr0, value, '0x', 0, {from: accounts[0], gasLimit: 1000000})
+
+    // Check funds sent
+    bal = await web3GetBalance(randomAddr0)
+    assert.equal(bal.toString(), value.toString())
+
+    // Check nonce updated
+    assert.equal((await multisig.noncesArr.call(0)).toNumber(), 3)
+    assert.equal((await multisig.noncesArr.call(1)).toNumber(), 2)
+
+    done()
+  }
+
+  let executeSendFailureCancelNonce = async function(owners, threshold, signers, done) {
+
+    let multisig = await SimpleMultiSig.new(threshold, owners, 2, {from: accounts[0]})
+
+    let randomAddr0 = solsha3(Math.random()).slice(0,42)
+
+    // Receive funds
+    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(0.1), 'ether')})
+
+    let nonce0 = await multisig.noncesArr.call(0)
+    assert.equal(nonce0.toNumber(), 0)
+
+    let bal = await web3GetBalance(multisig.address)
+    assert.equal(bal, web3.toWei(0.1, 'ether'))
+
+    await multisig.cancel_nonce(0)
+
+    assert.equal((await multisig.noncesArr.call(0)).toNumber(), 2)
+
+    let value = web3.toWei(new BigNumber(0.01), 'ether')
+
+    let sigs0 = createSigs(signers, multisig.address, nonce0, randomAddr0, value, '0x')
+
+    let errMsg = ''
+    try {
+        await multisig.execute_with_nonce_index(sigs0.sigV, sigs0.sigR, sigs0.sigS, randomAddr0, value, '0x', 0, {from: accounts[0], gasLimit: 1000000})
+    }
+    catch(error) {
+      errMsg = error.message
+    }
+
+    assert.equal(errMsg, 'VM Exception while processing transaction: revert', 'Test did not throw')
+
+    done()
+  }
+  let executeSendFailureNonceOutsideRange = async function(owners, threshold, signers, done) {
+
+    let multisig = await SimpleMultiSig.new(threshold, owners, 2, {from: accounts[0]})
+
+    let randomAddr0 = solsha3(Math.random()).slice(0,42)
+
+    // Receive funds
+    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(0.1), 'ether')})
+
+    let value = web3.toWei(new BigNumber(0.01), 'ether')
+
+    let nonce0 = 0
+    let sigs0 = createSigs(signers, multisig.address, nonce0, randomAddr0, value, '0x')
+
+    let errMsg = ''
+    try {
+        await multisig.execute_with_nonce_index(sigs0.sigV, sigs0.sigR, sigs0.sigS, randomAddr0, value, '0x', 2, {from: accounts[0], gasLimit: 1000000})
+    }
+    catch(error) {
+      errMsg = error.message
+    }
+
+    assert.equal(errMsg, 'VM Exception while processing transaction: revert', 'Test did not throw')
+
+    let errMsg1 = ''
+    try {
+        await multisig.noncesArr.call(2)
+    }
+    catch(error) {
+      errMsg1 = error.message
+    }
+
+    assert.equal(errMsg1, 'VM Exception while processing transaction: invalid opcode', 'Test did not throw')
+    done()
+  }
+
   let executeSendFailure = async function(owners, threshold, signers, done) {
 
-    let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
+    let multisig = await SimpleMultiSig.new(threshold, owners, 1, {from: accounts[0]})
 
     let nonce = await multisig.nonce.call()
     assert.equal(nonce.toNumber(), 0)
@@ -136,7 +255,7 @@ contract('SimpleMultiSig', function(accounts) {
   let creationFailure = async function(owners, threshold, done) {
 
     try {
-      await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
+      await SimpleMultiSig.new(threshold, owners, 1, {from: accounts[0]})
     }
     catch(error) {
       errMsg = error.message
@@ -216,6 +335,18 @@ contract('SimpleMultiSig', function(accounts) {
       executeSendFailure(acct.slice(0,3), 2, signers, done)
     })
 
+    it("should succeed concurrent", (done) => {
+      let signers = [acct[0], acct[1]]
+      signers.sort()
+      executeSendSuccessConcurrent(acct.slice(0,3), 2, signers, done)
+    })
+
+    it("should fail if nonce canceled", (done) => {
+      let signers = [acct[0], acct[1]]
+      signers.sort()
+      executeSendFailureCancelNonce(acct.slice(0,3), 2, signers, done)
+    })
+
   })  
 
   describe("Edge cases", () => {
@@ -233,6 +364,12 @@ contract('SimpleMultiSig', function(accounts) {
 
     it("should fail with 11 owners", (done) => {
       creationFailure(acct.slice(0,11), 2, done)
+    })
+
+    it("should fail with nonce outside range", (done) => {
+      let signers = [acct[0], acct[1]]
+      signers.sort()
+      executeSendFailureNonceOutsideRange(acct.slice(0,3), 2, signers, done)
     })
   })
 
