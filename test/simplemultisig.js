@@ -4,7 +4,6 @@ var lightwallet = require('eth-lightwallet')
 const solsha3 = require('solidity-sha3').default
 const leftPad = require('left-pad')
 const Promise = require('bluebird')
-const BigNumber = require('bignumber.js')
 
 const web3SendTransaction = Promise.promisify(web3.eth.sendTransaction)
 const web3GetBalance = Promise.promisify(web3.eth.getBalance)
