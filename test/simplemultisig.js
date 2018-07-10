@@ -2,7 +2,6 @@ var SimpleMultiSig = artifacts.require("./SimpleMultiSig.sol")
 var TestRegistry = artifacts.require("./TestRegistry.sol")
 var lightwallet = require('eth-lightwallet')
 const solsha3 = require('solidity-sha3').default
-const leftPad = require('left-pad')
 const Promise = require('bluebird')
 const BigNumber = require('bignumber.js')
 
@@ -17,7 +16,7 @@ contract('SimpleMultiSig', function(accounts) {
 
   let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, data) {
 
-    let input = '0x19' + '00' + multisigAddr.slice(2) + destinationAddr.slice(2) + leftPad(value.toString('16'), '64', '0') + data.slice(2) + leftPad(nonce.toString('16'), '64', '0')
+    let input = '0x19' + '00' + multisigAddr.slice(2) + destinationAddr.slice(2) + value.toString(16).padStart(64, 0) + data.slice(2) + nonce.toString(16).padStart(64, 0)
     let hash = solsha3(input)
 
     let sigV = []
