@@ -27,7 +27,7 @@ contract SimpleMultiSig {
     require(sigR.length == sigS.length && sigR.length == sigV.length);
 
     // Follows ERC191 signature scheme: https://github.com/ethereum/EIPs/issues/191
-    bytes32 txHash = keccak256(byte(0x19), byte(0), this, destination, value, data, nonce);
+    bytes32 txHash = keccak256(abi.encodePacked(byte(0x19), byte(0), this, destination, value, data, nonce));
 
     address lastAdd = address(0); // cannot have address(0) as an owner
     for (uint i = 0; i < threshold; i++) {
