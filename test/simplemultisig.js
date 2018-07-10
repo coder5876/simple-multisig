@@ -42,7 +42,7 @@ contract('SimpleMultiSig', function(accounts) {
     let randomAddr = solsha3(Math.random()).slice(0,42)
 
     // Receive funds
-    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(0.1), 'ether')})
+    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(web3.toBigNumber(0.1), 'ether')})
 
     let nonce = await multisig.nonce.call()
     assert.equal(nonce.toNumber(), 0)
@@ -56,7 +56,7 @@ contract('SimpleMultiSig', function(accounts) {
       assert.equal(owners[i], ownerFromContract)
     }
 
-    let value = web3.toWei(new BigNumber(0.01), 'ether')
+    let value = web3.toWei(web3.toBigNumber(0.01), 'ether')
 
     let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
 
@@ -114,10 +114,10 @@ contract('SimpleMultiSig', function(accounts) {
     assert.equal(nonce.toNumber(), 0)
 
     // Receive funds
-    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(2), 'ether')})
+    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(web3.toBigNumber(2), 'ether')})
 
     let randomAddr = solsha3(Math.random()).slice(0,42)
-    let value = web3.toWei(new BigNumber(0.1), 'ether')
+    let value = web3.toWei(web3.toBigNumber(0.1), 'ether')
     let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
 
     let errMsg = ''
