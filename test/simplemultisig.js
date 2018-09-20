@@ -7,11 +7,13 @@ const BigNumber = require('bignumber.js')
 const web3SendTransaction = Promise.promisify(web3.eth.sendTransaction)
 const web3GetBalance = Promise.promisify(web3.eth.getBalance)
 
-let DOMAIN_SEPARATOR = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+let DOMAIN_SEPARATOR
 const TXTYPE_HASH = '0xe7beff35c01d1bb188c46fbae3d80f308d2600ba612c687a3e61446e0dffda0b'
 const NAME_HASH = '0xb7a0bfa1b79f2443f4d73ebb9259cddbcd510b18be6fc4da7d1aa7b1786e73e6'
 const VERSION_HASH = '0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6'
-const EIP712DOMAIN_HASH = '0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f'
+const EIP712DOMAINTYPE_HASH = '0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f'
+
+const CHAINID = 4444
 
 
 contract('SimpleMultiSig', function(accounts) {
@@ -21,6 +23,9 @@ contract('SimpleMultiSig', function(accounts) {
   let lw
 
   let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, data) {
+
+    const domainData = EIP712DOMAINTYPE_HASH + NAME_HASH.slice(2) + VERSION_HASH.slice(2) + CHAINID.toString('16').padStart(64, '0') + multisigAddr.slice(2).padStart(64, '0')
+    DOMAIN_SEPARATOR = web3.sha3(domainData, {encoding: 'hex'})
 
     let txInput = TXTYPE_HASH + destinationAddr.slice(2).padStart(64, '0') + value.toString('16').padStart(64, '0') + web3.sha3(data, {encoding: 'hex'}).slice(2) + nonce.toString('16').padStart(64, '0')
     let txInputHash = web3.sha3(txInput, {encoding: 'hex'})
@@ -45,7 +50,7 @@ contract('SimpleMultiSig', function(accounts) {
 
   let executeSendSuccess = async function(owners, threshold, signers, done) {
 
-    let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
+    let multisig = await SimpleMultiSig.new(threshold, owners, CHAINID, {from: accounts[0]})
 
     let randomAddr = web3.sha3(Math.random().toString()).slice(0,42)
 
@@ -116,7 +121,7 @@ contract('SimpleMultiSig', function(accounts) {
 
   let executeSendFailure = async function(owners, threshold, signers, done) {
 
-    let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
+    let multisig = await SimpleMultiSig.new(threshold, owners, CHAINID, {from: accounts[0]})
 
     let nonce = await multisig.nonce.call()
     assert.equal(nonce.toNumber(), 0)
@@ -144,7 +149,7 @@ contract('SimpleMultiSig', function(accounts) {
   let creationFailure = async function(owners, threshold, done) {
 
     try {
-      await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
+      await SimpleMultiSig.new(threshold, owners, CHAINID, {from: accounts[0]})
     }
     catch(error) {
       errMsg = error.message
@@ -245,9 +250,9 @@ contract('SimpleMultiSig', function(accounts) {
   })
 
   describe("Hash constants", () => {
-    it("uses correct hash for EIP712DOMAIN", (done) => {
+    it("uses correct hash for EIP712DOMAINTYPE", (done) => {
       const eip712DomainType = 'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
-      assert.equal(web3.sha3(eip712DomainType), EIP712DOMAIN_HASH)
+      assert.equal(web3.sha3(eip712DomainType), EIP712DOMAINTYPE_HASH)
       done()
     })
 

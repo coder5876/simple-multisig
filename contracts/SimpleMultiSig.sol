@@ -1,5 +1,19 @@
 pragma solidity ^0.4.22;
 
+// EIP712 Precomputed hashes:
+//
+// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)") =
+// 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f
+//
+// kekkac256("Simple MultiSig") = 
+// 0xb7a0bfa1b79f2443f4d73ebb9259cddbcd510b18be6fc4da7d1aa7b1786e73e6
+//
+// kekkac256("1") = 
+// 0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6
+//
+// kekkac256("MultiSigTransaction(address destination,uint256 value,bytes data,uint256 nonce)") =
+// 0xe7beff35c01d1bb188c46fbae3d80f308d2600ba612c687a3e61446e0dffda0b
+
 contract SimpleMultiSig {
 
   uint public nonce;                 // (only) mutable state
@@ -10,7 +24,7 @@ contract SimpleMultiSig {
   bytes32 DOMAIN_SEPARATOR;
   
   // Note that owners_ must be strictly increasing, in order to prevent duplicates
-  constructor(uint threshold_, address[] owners_) public {
+  constructor(uint threshold_, address[] owners_, uint chainId) public {
     require(owners_.length <= 10 && threshold_ <= owners_.length && threshold_ > 0);
 
     address lastAdd = address(0); 
@@ -22,13 +36,11 @@ contract SimpleMultiSig {
     ownersArr = owners_;
     threshold = threshold_;
 
-    // DOMAIN_SEPARATOR = keccak256(abi.encode(EIP712_HASH,
-    //                                         NAME_HASH,
-    //                                         VERSION_HASH,
-    //                                         chainId,
-    //                                         this));
-
-    DOMAIN_SEPARATOR = 0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+    DOMAIN_SEPARATOR = keccak256(abi.encode(0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f,
+                                            0xb7a0bfa1b79f2443f4d73ebb9259cddbcd510b18be6fc4da7d1aa7b1786e73e6,
+                                            0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6,
+                                            chainId,
+                                            this));
   }
 
   // Note that address recovered from signatures must be strictly increasing, in order to prevent duplicates
