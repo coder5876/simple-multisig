@@ -1,13 +1,18 @@
 var SimpleMultiSig = artifacts.require("./SimpleMultiSig.sol")
 var TestRegistry = artifacts.require("./TestRegistry.sol")
 var lightwallet = require('eth-lightwallet')
-const solsha3 = require('solidity-sha3').default
-const leftPad = require('left-pad')
 const Promise = require('bluebird')
 const BigNumber = require('bignumber.js')
 
 const web3SendTransaction = Promise.promisify(web3.eth.sendTransaction)
 const web3GetBalance = Promise.promisify(web3.eth.getBalance)
+
+let DOMAIN_SEPARATOR = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+const TXTYPE_HASH = '0xe7beff35c01d1bb188c46fbae3d80f308d2600ba612c687a3e61446e0dffda0b'
+const NAME_HASH = '0xb7a0bfa1b79f2443f4d73ebb9259cddbcd510b18be6fc4da7d1aa7b1786e73e6'
+const VERSION_HASH = '0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6'
+const EIP712DOMAIN_HASH = '0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f'
+
 
 contract('SimpleMultiSig', function(accounts) {
 
@@ -17,9 +22,12 @@ contract('SimpleMultiSig', function(accounts) {
 
   let createSigs = function(signers, multisigAddr, nonce, destinationAddr, value, data) {
 
-    let input = '0x19' + '00' + multisigAddr.slice(2) + destinationAddr.slice(2) + leftPad(value.toString('16'), '64', '0') + data.slice(2) + leftPad(nonce.toString('16'), '64', '0')
-    let hash = solsha3(input)
-
+    let txInput = TXTYPE_HASH + destinationAddr.slice(2).padStart(64, '0') + value.toString('16').padStart(64, '0') + web3.sha3(data, {encoding: 'hex'}).slice(2) + nonce.toString('16').padStart(64, '0')
+    let txInputHash = web3.sha3(txInput, {encoding: 'hex'})
+    
+    let input = '0x19' + '01' + DOMAIN_SEPARATOR.slice(2) + txInputHash.slice(2)
+    let hash = web3.sha3(input, {encoding: 'hex'})
+    
     let sigV = []
     let sigR = []
     let sigS = []
@@ -39,7 +47,7 @@ contract('SimpleMultiSig', function(accounts) {
 
     let multisig = await SimpleMultiSig.new(threshold, owners, {from: accounts[0]})
 
-    let randomAddr = solsha3(Math.random()).slice(0,42)
+    let randomAddr = web3.sha3(Math.random().toString()).slice(0,42)
 
     // Receive funds
     await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(0.1), 'ether')})
@@ -58,9 +66,9 @@ contract('SimpleMultiSig', function(accounts) {
 
     let value = web3.toWei(new BigNumber(0.01), 'ether')
 
-    let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
+    let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '')
 
-    await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '0x', {from: accounts[0], gasLimit: 1000000})
+    await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '', {from: accounts[0], gasLimit: 1000000})
 
     // Check funds sent
     bal = await web3GetBalance(randomAddr)
@@ -71,8 +79,8 @@ contract('SimpleMultiSig', function(accounts) {
     assert.equal(nonce.toNumber(), 1)
 
     // Send again
-    sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
-    await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '0x', {from: accounts[0], gasLimit: 1000000})
+    sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '')
+    await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '', {from: accounts[0], gasLimit: 1000000})
 
     // Check funds
     bal = await web3GetBalance(randomAddr)
@@ -116,13 +124,13 @@ contract('SimpleMultiSig', function(accounts) {
     // Receive funds
     await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(2), 'ether')})
 
-    let randomAddr = solsha3(Math.random()).slice(0,42)
+    let randomAddr = web3.sha3(Math.random().toString()).slice(0,42)
     let value = web3.toWei(new BigNumber(0.1), 'ether')
-    let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '0x')
+    let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '')
 
     let errMsg = ''
     try {
-    await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '0x', {from: accounts[0], gasLimit: 1000000})
+    await multisig.execute(sigs.sigV, sigs.sigR, sigs.sigS, randomAddr, value, '', {from: accounts[0], gasLimit: 1000000})
     }
     catch(error) {
       errMsg = error.message
@@ -236,4 +244,29 @@ contract('SimpleMultiSig', function(accounts) {
     })
   })
 
+  describe("Hash constants", () => {
+    it("uses correct hash for EIP712DOMAIN", (done) => {
+      const eip712DomainType = 'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
+      assert.equal(web3.sha3(eip712DomainType), EIP712DOMAIN_HASH)
+      done()
+    })
+
+    it("uses correct hash for NAME", (done) => {
+      assert.equal(web3.sha3('Simple MultiSig'), NAME_HASH)
+      done()
+    })
+
+    it("uses correct hash for VERSION", (done) => {
+      assert.equal(web3.sha3('1'), VERSION_HASH)
+      done()
+    })
+
+    it("uses correct hash for MULTISIGTX", (done) => {
+      const multiSigTxType = 'MultiSigTransaction(address destination,uint256 value,bytes data,uint256 nonce)'
+      assert.equal(web3.sha3(multiSigTxType), TXTYPE_HASH)
+      done()
+    })
+  })
+
+  
 })
