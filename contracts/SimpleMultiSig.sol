@@ -1,21 +1,20 @@
 pragma solidity ^0.4.22;
 
-// EIP712 Precomputed hashes:
-//
-// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)") =
-// 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f
-//
-// kekkac256("Simple MultiSig") = 
-// 0xb7a0bfa1b79f2443f4d73ebb9259cddbcd510b18be6fc4da7d1aa7b1786e73e6
-//
-// kekkac256("1") = 
-// 0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6
-//
-// kekkac256("MultiSigTransaction(address destination,uint256 value,bytes data,uint256 nonce)") =
-// 0xe7beff35c01d1bb188c46fbae3d80f308d2600ba612c687a3e61446e0dffda0b
-
 contract SimpleMultiSig {
 
+// EIP712 Precomputed hashes:
+// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
+bytes32 constant EIP712DOMAINTYPE_HASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+
+// kekkac256("Simple MultiSig")
+bytes32 constant NAME_HASH = 0xb7a0bfa1b79f2443f4d73ebb9259cddbcd510b18be6fc4da7d1aa7b1786e73e6;
+
+// kekkac256("1")
+bytes32 constant VERSION_HASH = 0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6;
+
+// kekkac256("MultiSigTransaction(address destination,uint256 value,bytes data,uint256 nonce)")
+bytes32 constant TXTYPE_HASH = 0xe7beff35c01d1bb188c46fbae3d80f308d2600ba612c687a3e61446e0dffda0b;
+  
   uint public nonce;                 // (only) mutable state
   uint public threshold;             // immutable state
   mapping (address => bool) isOwner; // immutable state
@@ -36,9 +35,9 @@ contract SimpleMultiSig {
     ownersArr = owners_;
     threshold = threshold_;
 
-    DOMAIN_SEPARATOR = keccak256(abi.encode(0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f,
-                                            0xb7a0bfa1b79f2443f4d73ebb9259cddbcd510b18be6fc4da7d1aa7b1786e73e6,
-                                            0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6,
+    DOMAIN_SEPARATOR = keccak256(abi.encode(EIP712DOMAINTYPE_HASH,
+                                            NAME_HASH,
+                                            VERSION_HASH,
                                             chainId,
                                             this));
   }
@@ -49,7 +48,7 @@ contract SimpleMultiSig {
     require(sigR.length == sigS.length && sigR.length == sigV.length);
 
     // EIP712 scheme: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
-    bytes32 txInputHash = keccak256(abi.encode(0xe7beff35c01d1bb188c46fbae3d80f308d2600ba612c687a3e61446e0dffda0b, destination, value, keccak256(data), nonce));
+    bytes32 txInputHash = keccak256(abi.encode(TXTYPE_HASH, destination, value, keccak256(data), nonce));
     bytes32 totalHash = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, txInputHash));
 
     address lastAdd = address(0); // cannot have address(0) as an owner
