@@ -11,11 +11,11 @@ let DOMAIN_SEPARATOR
 const TXTYPE_HASH = '0x3ee892349ae4bbe61dce18f95115b5dc02daf49204cc602458cd4c1f540d56d7'
 const NAME_HASH = '0xb7a0bfa1b79f2443f4d73ebb9259cddbcd510b18be6fc4da7d1aa7b1786e73e6'
 const VERSION_HASH = '0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6'
-const EIP712DOMAINTYPE_HASH = '0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f'
+const EIP712DOMAINTYPE_HASH = '0xd87cd6ef79d4e2b95e15ce8abf732db51ec771f1ca2edccf22a46c729ac56472'
 const SALT = '0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf758dc33cc0'
 
 
-const CHAINID = 4444
+const CHAINID = 1
 const ZEROADDR = '0x000000000000000000000000000000000000000000000'
 
 contract('SimpleMultiSig', function(accounts) {
@@ -46,6 +46,20 @@ contract('SimpleMultiSig', function(accounts) {
       sigS.push('0x' + sig.s.toString('hex'))
     }
 
+    // if (signers[0] == acct[0]) {
+    //   console.log("Signer: " + signers[0])
+    //   console.log("Wallet address: " + multisigAddr)
+    //   console.log("Destination: " + destinationAddr)
+    //   console.log("Value: " + value)
+    //   console.log("Data: " + data)
+    //   console.log("Nonce: " + nonce)
+    //   console.log("Executor: " + executor)
+    //   console.log("gasLimit: " + gasLimit)
+    //   console.log("r: " + sigR[0])
+    //   console.log("s: " + sigS[0])
+    //   console.log("v: " + sigV[0])
+    // }
+      
     return {sigV: sigV, sigR: sigR, sigS: sigS}
 
   }
@@ -233,6 +247,11 @@ contract('SimpleMultiSig', function(accounts) {
       executeSendFailure(acct.slice(0,3), 2, signers, 0, accounts[0], 100000, done)
     })
 
+    it("should fail with the wrong nonce", (done) => {
+      const nonceOffset = 1
+      executeSendFailure(acct.slice(0,3), 2, [acct[0], acct[1]], nonceOffset, accounts[0], 100000, done)
+    })
+    
   })  
 
   describe("Edge cases", () => {
@@ -255,7 +274,7 @@ contract('SimpleMultiSig', function(accounts) {
 
   describe("Hash constants", () => {
     it("uses correct hash for EIP712DOMAINTYPE", (done) => {
-      const eip712DomainType = 'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'
+      const eip712DomainType = 'EIP712Domain(string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)'
       assert.equal(web3.sha3(eip712DomainType), EIP712DOMAINTYPE_HASH)
       done()
     })

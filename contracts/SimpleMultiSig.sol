@@ -3,8 +3,8 @@ pragma solidity ^0.4.22;
 contract SimpleMultiSig {
 
 // EIP712 Precomputed hashes:
-// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
-bytes32 constant EIP712DOMAINTYPE_HASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)")
+bytes32 constant EIP712DOMAINTYPE_HASH = 0xd87cd6ef79d4e2b95e15ce8abf732db51ec771f1ca2edccf22a46c729ac56472;
 
 // kekkac256("Simple MultiSig")
 bytes32 constant NAME_HASH = 0xb7a0bfa1b79f2443f4d73ebb9259cddbcd510b18be6fc4da7d1aa7b1786e73e6;
