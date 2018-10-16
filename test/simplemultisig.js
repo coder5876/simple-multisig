@@ -296,5 +296,45 @@ contract('SimpleMultiSig', function(accounts) {
     })
   })
 
+  describe("Browser MetaMask test", () => {
+    it("Matches the signature from MetaMask", (done) => {
+
+      // To test in MetaMask:
+      //
+      // Import the following private key in MetaMask:
+      // 0x022257944893befdd9089259c60346fe12b47621cb58670670dd21dc2fd15674c9
+      // It should give the address:
+      // 0x01BF9878a7099b2203838f3a8E7652Ad7B127A26
+      //
+      // Make sure you are on Mainnet with the above account
+      // Load the HTML page located at
+      // browsertest/index.html
+      // and click "Sign data" (using the default values).
+      // You should see the signature values r,s,v below:
+
+      const mmSigR = '0x91a622ccbd1c65debc16cfa1761b6200acc42099a19d753c7c59ceb12a8f5cfc'
+      const mmSigS = '0x6814fae69a6cc506b11adf971ca233fbcdbdca312ab96a58eb6b6b6792771fd4'
+      const mmSigV = 27
+
+      const walletAddress = '0xe3de7de481cbde9b4d5f62c6d228ec62277560c8'
+      const destination = '0x8582afea2dd8e47297dbcdcf9ca289756ee21430'
+      const value = web3.toWei(new BigNumber(0.01), 'ether')
+      const data = '0xf207564e0000000000000000000000000000000000000000000000000000000000003039'
+      const nonce = 2
+      const executor = '0x0be430662ec0659ee786c04925c0146991fbdc0f'
+      const gasLimit = 100000
+      const signers = [acct[0]]
+
+      let sigs = createSigs(signers, walletAddress, nonce, destination, value, data, executor, gasLimit)
+      
+      assert.equal(sigs.sigR[0], mmSigR)
+      assert.equal(sigs.sigS[0], mmSigS)
+      assert.equal(sigs.sigV[0], mmSigV)
+      
+      done()
+    })
+  })
+
+  
   
 })
