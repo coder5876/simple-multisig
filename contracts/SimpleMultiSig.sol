@@ -71,5 +71,5 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
     require(success);
   }
 
-  function () payable public {}
+  function () payable external {}
 }
