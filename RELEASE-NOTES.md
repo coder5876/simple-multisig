@@ -14,6 +14,8 @@
 
 * Add test for wrong nonce.
 
+* Update Solidity compiler version to 0.4.24.
+
 ## Version 1.0.4 - 2018-06-12 ##
 
 * Document owners_ address being strictly increasing, by [ripper234](https://github.com/ripper234)
