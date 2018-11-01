@@ -2,7 +2,6 @@ var SimpleMultiSig = artifacts.require("./SimpleMultiSig.sol")
 var TestRegistry = artifacts.require("./TestRegistry.sol")
 var lightwallet = require('eth-lightwallet')
 const Promise = require('bluebird')
-const BigNumber = require('bignumber.js')
 
 const web3SendTransaction = Promise.promisify(web3.eth.sendTransaction)
 const web3GetBalance = Promise.promisify(web3.eth.getBalance)
@@ -72,7 +71,7 @@ contract('SimpleMultiSig', function(accounts) {
     let msgSender = accounts[0]
     
     // Receive funds
-    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(0.1), 'ether')})
+    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(web3.toBigNumber(0.1), 'ether')})
 
     let nonce = await multisig.nonce.call()
     assert.equal(nonce.toNumber(), 0)
@@ -86,7 +85,7 @@ contract('SimpleMultiSig', function(accounts) {
       assert.equal(owners[i], ownerFromContract)
     }
 
-    let value = web3.toWei(new BigNumber(0.01), 'ether')
+    let value = web3.toWei(web3.toBigNumber(0.01), 'ether')
 
     let sigs = createSigs(signers, multisig.address, nonce, randomAddr, value, '', executor, 21000)
 
@@ -145,10 +144,10 @@ contract('SimpleMultiSig', function(accounts) {
     assert.equal(nonce.toNumber(), 0)
 
     // Receive funds
-    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(new BigNumber(2), 'ether')})
+    await web3SendTransaction({from: accounts[0], to: multisig.address, value: web3.toWei(web3.toBigNumber(2), 'ether')})
 
     let randomAddr = web3.sha3(Math.random().toString()).slice(0,42)
-    let value = web3.toWei(new BigNumber(0.1), 'ether')
+    let value = web3.toWei(web3.toBigNumber(0.1), 'ether')
     let sigs = createSigs(signers, multisig.address, nonce + nonceOffset, randomAddr, value, '', executor, gasLimit)
 
     let errMsg = ''
@@ -318,7 +317,7 @@ contract('SimpleMultiSig', function(accounts) {
 
       const walletAddress = '0xe3de7de481cbde9b4d5f62c6d228ec62277560c8'
       const destination = '0x8582afea2dd8e47297dbcdcf9ca289756ee21430'
-      const value = web3.toWei(new BigNumber(0.01), 'ether')
+      const value = web3.toWei(web3.toBigNumber(0.01), 'ether')
       const data = '0xf207564e0000000000000000000000000000000000000000000000000000000000003039'
       const nonce = 2
       const executor = '0x0be430662ec0659ee786c04925c0146991fbdc0f'
