@@ -10,7 +10,7 @@ For a review by maurelian, see the file `maurelian_review.md`.
 
 ## Version 2.0.0 Update to EIP712
 
-In version 2.0.0 the Simple Multisig was updated to use the EIP712 signature standard. This means that the signature format of the previous version is no longer compatible. If your contract is already deployed and in use it still works but that version will no longer be supported in the future. We recommend moving ETH and tokens over to a newly deployed contract and using the EIP712 format going forward.
+In version 2.0.0 the Simple Multisig was updated to use the EIP712 signature standard. This means that the signature format of the previous version is no longer compatible. If your contract is already deployed and in use it still works but that version will no longer be supported in the future. We recommend moving ETH and tokens over to a newly deployed contract and using the EIP712 format going forward. Another change to be aware of is that the constructor now takes an extra parameter `chainId` to specify which network the contract is deployed on.
 
 ## Data to be signed
 

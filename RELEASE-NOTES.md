@@ -8,6 +8,8 @@
 
 * Add `gasLimit` to the signed data in order to specify how much gas to supply to the function call.
 
+* Add input parameter `chainId` to the constructor.
+
 * Change fallback function from `public` to `external`.
 
 * Update tests for EIP712.
