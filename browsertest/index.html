@@ -1,0 +1,53 @@
+<head>
+  <meta charset="utf-8">
+  <title>EIP712 browser demo</title>
+</head>
+<body>
+  <script src="./sign.js" language="javascript"></script>
+  <p>
+    This page tests signing a SimpleMultiSig transaction using EIP712. It is based on <a href="https://weijiekoh.github.io/eip712-signing-demo/index.html">this EIP712 demo</a> by Wei Jie Koh.
+  </p>
+
+  <table>
+    <thead>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Wallet address</td>
+        <td><input type="text" id="walletAddress" size="40" value="0xe3de7de481cbde9b4d5f62c6d228ec62277560c8"></td>
+      </tr>
+      <tr>
+        <td>Destination</td>
+        <td><input type="text" id="destination" size="40" value="0x8582afea2dd8e47297dbcdcf9ca289756ee21430"></td>
+      </tr>
+      <tr>
+        <td>Value</td>
+        <td><input type="text" id="value" size="10" value="10000000000000000"></td>
+      </tr>
+      <tr>
+        <td>Data</td>
+        <td><input type="text" id="data" size="40" value="0xf207564e0000000000000000000000000000000000000000000000000000000000003039"></td>
+      </tr>
+      <tr>
+        <td>Nonce</td>
+        <td><input type="text" id="nonce" size="10" value="2"/></td>
+      </tr>
+      <tr>
+        <td>Executor</td>
+        <td><input type="text" id="executor" size="40" value="0x0be430662ec0659ee786c04925c0146991fbdc0f"></td>
+      </tr>
+      <tr>
+        <td>GasLimit</td>
+        <td><input type="text" id="gasLimit" size="10" value="100000"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button id="signBtn">Sign data</button>
+  
+  <h3>Signed Data</h3>
+  <div><textarea id='signedData' rows=8 cols=40></textarea></div>
+  
+
+</body>
+  

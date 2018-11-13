@@ -1,5 +1,25 @@
 # Release Notes #
 
+## Version 2.0.0 - 2018-08-18 ##
+
+* Backwards incompatible update of main contract to support [EIP712](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md).
+
+* Add `executor` to the signed data in order to specify which address needs to call the `execute` function. Allows `address(0)` as valid executor if the signers want anyone to be able to execute the transaction.
+
+* Add `gasLimit` to the signed data in order to specify how much gas to supply to the function call.
+
+* Add input parameter `chainId` to the constructor.
+
+* Change fallback function from `public` to `external`.
+
+* Update tests for EIP712.
+
+* Add test for wrong nonce.
+
+* Update Solidity compiler version to 0.4.24.
+
+* Remove use of `bignumber.js` and replace with `web3.toBigNumber()` (Thanks to [barakman](https://github.com/barakman)).
+
 ## Version 1.0.4 - 2018-06-12 ##
 
 * Document owners_ address being strictly increasing, by [ripper234](https://github.com/ripper234)
