@@ -1,5 +1,13 @@
 # Release Notes #
 
+## Version 2.0.1 - 2019-06-19
+
+* Fix misspellings in contract comments. By [ethers](https://github.com/ethers).
+
+* Update browser test with check for web3 object.
+
+* Fix faulty documentation of private key in MetaMask browser test.
+
 ## Version 2.0.0 - 2018-08-18 ##
 
 * Backwards incompatible update of main contract to support [EIP712](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md).

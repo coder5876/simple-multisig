@@ -15,6 +15,7 @@ window.onload = function (e) {
   // force the user to unlock their MetaMask
   if (web3.eth.accounts[0] == null) {
     alert("Please unlock MetaMask first");
+    web3.currentProvider.enable().catch(alert);
   }
 
   var signBtn = document.getElementById("signBtn");
