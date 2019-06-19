@@ -301,7 +301,7 @@ contract('SimpleMultiSig', function(accounts) {
       // To test in MetaMask:
       //
       // Import the following private key in MetaMask:
-      // 0x022257944893befdd9089259c60346fe12b47621cb58670670dd21dc2fd15674c9
+      // 0xac6d4b13220cd81f3630b7714f7e205494acc0823fb07a63bb40e65f669cbb9e
       // It should give the address:
       // 0x01BF9878a7099b2203838f3a8E7652Ad7B127A26
       //
