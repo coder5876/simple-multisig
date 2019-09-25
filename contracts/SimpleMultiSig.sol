@@ -23,6 +23,9 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
   address[] public ownersArr;        // immutable state
 
   bytes32 DOMAIN_SEPARATOR;          // hash for EIP712, computed from contract address
+
+  event Deposit(address indexed from, uint value);
+  event Withdrawal(address indexed to, uint value);
   
   // Note that owners_ must be strictly increasing, in order to prevent duplicates
   constructor(uint threshold_, address[] owners_, uint chainId) public {
@@ -68,8 +71,11 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
     nonce = nonce + 1;
     bool success = false;
     assembly { success := call(gasLimit, destination, value, add(data, 0x20), mload(data), 0, 0) }
+    emit Withdrawal(destination, value);
     require(success);
   }
 
-  function () payable external {}
+  function () payable external {
+    emit Deposit(msg.sender, msg.value);
+  }
 }
