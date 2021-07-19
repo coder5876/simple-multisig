@@ -10,19 +10,12 @@ function parseSignature(signature) {
   }
 }
 
-window.onload = function (e) {
-
-  // force the user to unlock their MetaMask
-  if (web3.eth.accounts[0] == null) {
-    alert("Please unlock MetaMask first");
-    web3.currentProvider.enable().catch(alert);
-  }
+window.onload = async function (e) {
+  
+  var accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
 
   var signBtn = document.getElementById("signBtn");
   signBtn.onclick = function(e) {
-    if (web3.eth.accounts[0] == null) {
-      return;
-    }
 
     const domain = [
       { name: "name", type: "string" },
@@ -44,7 +37,7 @@ window.onload = function (e) {
     const domainData = {
       name: "Simple MultiSig",
       version: "1",
-      chainId: parseInt(web3.version.network, 10),
+      chainId: parseInt(window.ethereum.chainId, 10),
       verifyingContract: document.getElementById("walletAddress").value,
       salt: "0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf758dc33cc0"
     };
@@ -70,10 +63,10 @@ window.onload = function (e) {
 
     console.log(data)
     
-    const signer = web3.eth.accounts[0];
+    const signer = accounts[0];
 
     console.log(signer)
-    web3.currentProvider.sendAsync(
+    window.ethereum.sendAsync(
       {
         method: "eth_signTypedData_v3",
         params: [signer, data],
