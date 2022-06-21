@@ -1,4 +1,5 @@
-pragma solidity ^0.4.24;
+//SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.12;
 
 contract SimpleMultiSig {
 
@@ -22,10 +23,10 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
   mapping (address => bool) isOwner; // immutable state
   address[] public ownersArr;        // immutable state
 
-  bytes32 DOMAIN_SEPARATOR;          // hash for EIP712, computed from contract address
+  bytes32 public DOMAIN_SEPARATOR;          // hash for EIP712, computed from contract address
   
   // Note that owners_ must be strictly increasing, in order to prevent duplicates
-  constructor(uint threshold_, address[] owners_, uint chainId) public {
+  constructor(uint threshold_, address[] memory owners_, uint chainId) {
     require(owners_.length <= 10 && threshold_ <= owners_.length && threshold_ > 0);
 
     address lastAdd = address(0);
@@ -45,31 +46,83 @@ bytes32 constant SALT = 0x251543af6a222378665a76fe38dbceae4871a070b7fdaf5c6c30cf
                                             SALT));
   }
 
-  // Note that address recovered from signatures must be strictly increasing, in order to prevent duplicates
-  function execute(uint8[] sigV, bytes32[] sigR, bytes32[] sigS, address destination, uint value, bytes data, address executor, uint gasLimit) public {
-    require(sigR.length == threshold);
-    require(sigR.length == sigS.length && sigR.length == sigV.length);
-    require(executor == msg.sender || executor == address(0));
+
+    // Note that address recovered from signatures must be strictly increasing, in order to prevent duplicates
+  function execute(
+  bytes [] memory sig, 
+  address destination,
+  uint value, 
+  bytes memory data, 
+  address executor, 
+  uint gasLimit)
+   public {
+    require(sig.length == threshold, "execute: sigR.length == threshold ");
+    require(executor == msg.sender || executor == address(0), "execute: executor == msg.sender || executor == address(0)");
+    require(recoverMulti(sig, destination, value, data, executor, gasLimit) == true,"execute: recoverMulti == false" );
+  
+    nonce = nonce + 1;
+    bool success = false;
+    assembly { success := call(gasLimit, destination, value, add(data, 0x20), mload(data), 0, 0) }
+    require(success,"execute: success ");
+  }
+
+function recoverMulti( 
+bytes [] memory sig, 
+address destination, 
+uint value, 
+bytes memory data,
+address executor, 
+uint gasLimit)
+internal view
+ returns (bool )
+ {
 
     // EIP712 scheme: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-712.md
     bytes32 txInputHash = keccak256(abi.encode(TXTYPE_HASH, destination, value, keccak256(data), nonce, executor, gasLimit));
     bytes32 totalHash = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, txInputHash));
-
+    bytes32 message = prefixed(totalHash);
+    
     address lastAdd = address(0); // cannot have address(0) as an owner
+
     for (uint i = 0; i < threshold; i++) {
-      address recovered = ecrecover(totalHash, sigV[i], sigR[i], sigS[i]);
-      require(recovered > lastAdd && isOwner[recovered]);
+      (uint8 v, bytes32 r, bytes32 s) = splitSignature(sig[i]);
+      address recovered = ecrecover(message, v, r, s);
+      require(recovered > lastAdd,"execute: recovered > lastAdd ");
+      require(isOwner[recovered],"execute: isOwner[recovered]");
       lastAdd = recovered;
     }
-
-    // If we make it here all signatures are accounted for.
-    // The address.call() syntax is no longer recommended, see:
-    // https://github.com/ethereum/solidity/issues/2884
-    nonce = nonce + 1;
-    bool success = false;
-    assembly { success := call(gasLimit, destination, value, add(data, 0x20), mload(data), 0, 0) }
-    require(success);
+    
+    return true;
   }
 
-  function () payable external {}
+ /// signature methods.
+    function splitSignature(bytes memory sig)
+        internal
+        pure
+        returns (uint8 v, bytes32 r, bytes32 s)
+    {
+        require(sig.length == 65);
+
+        assembly {
+            // first 32 bytes, after the length prefix.
+            r := mload(add(sig, 32))
+            // second 32 bytes.
+            s := mload(add(sig, 64))
+            // final byte (first byte of the next 32 bytes).
+            v := byte(0, mload(add(sig, 96)))
+        }
+
+        return (v, r, s);
+    }
+
+     /// builds a prefixed hash to mimic the behavior of eth_sign.
+    function prefixed(bytes32 hash) 
+    internal 
+    pure 
+    returns (bytes32) {
+        return keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+    }
+
+
+  receive () payable external {}
 }
